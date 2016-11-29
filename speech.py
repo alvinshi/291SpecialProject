@@ -6,6 +6,7 @@ import threading
 
 #Libraries
 import web
+import make_call
 
 def chatBotInit():
     chatbot = ChatBot('Alvin' , trainer='chatterbot.trainers.ChatterBotCorpusTrainer')
@@ -93,10 +94,10 @@ class speechModule (threading.Thread) :
                     self.data.mode = "call"
                     if ("help" in text):
                         self.data.callee = "911"
+                        make_call.call(self.data.callee);
                     else:
                         self.data.callee = "+1(412)320-0542"
-                    #wheelchairMode()
-                    print
+                        make_call.call(self.data.callee);
                 elif text == "shut down":
                     break
             except sr.UnknownValueError:
