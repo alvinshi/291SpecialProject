@@ -1,122 +1,15 @@
+# Third Party Libraries
 from tkinter import *
-import speech_recognition as sr
-from chatterbot import ChatBot
-import pyttsx
 import threading
 import time
 from time import gmtime, strftime
 from datetime import datetime
 from pytz import timezone
 import math
-import pyowm
 
-class webScrappingModule():
-    def __init__(self):
-        self.owm = pyowm.OWM('72f1ef2d8c82603b080e0c582cf3544f')
-    def weather(self, location = "Pittsburgh, US", inDetailed = True):
-        observation = self.owm.weather_at_place(location)
-        w = observation.get_weather()
-        if (not inDetailed):
-            return "%1.1f, degress celsius" %(w.get_temperature('celsius')['temp'])
-        else:
-            result = "It's %1.1f degress celsius out there\n" %(w.get_temperature('celsius')['temp'])
-            return result
+# Libaries
+import speech
 
-    def weatherForcast(self, location = "Pittsburgh, US"):
-        return
-        #forecast = self.owm.daily_forecast(location)
-        #tomorrow = pyowm.timeutils.tomorrow()
-        #print tomorrow
-        #return tomorrow
-        
-    
-class speakEngine(threading.Thread):
-    def __init__(self, response):
-        threading.Thread.__init__(self)
-        self.engine = pyttsx.init()
-        self.response = response
-        
-    def run(self):
-        self.engine.say(self.response)
-        self.engine.runAndWait()
-        
-class chatBot():
-    def __init__(self, data):
-        self.data = data
-        self.engine = pyttsx.init()
-        
-    def run(self):
-        print "chat bot mode start"
-        while (True):
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
-                audio = r.listen(source)
-            try:
-                text = r.recognize_google(audio)
-                self.data.handler.informationOutputHandler(self.data, text)
-                print("You said: " + text)
-                if text == "goodbye" :
-                    self.data.handler.informationOutputHandler(self.data, "See you next time!")
-                    self.data.mode = "standby"
-                    break;
-                elif ("ready" in text) and ("wheelchair" in text):
-                    self.data.mode = "wheelchair"
-                    #wheelchairMode()
-                    print
-                elif ("temperature" in text) and (("now" in text) or ("outside" in text)):
-                    webScrapping = webScrappingModule()
-                    response = webScrapping.weather()
-                    self.data.handler.informationOutputHandler(self.data, response)
-                elif ("weather" in text) and ("tomorrow" in text):
-                    webScrapping = webScrappingModule()
-                    response = webScrapping.weatherForcast()
-                    self.data.handler.informationOutputHandler(self.data, response)
-                else:
-                    response = self.data.chatBot.get_response(text)
-                    print response
-                    self.data.handler.informationOutputHandler(self.data, response)
-            except sr.UnknownValueError:
-                print "Unknown Value Error"
-            except sr.RequestError as e:
-                print("Could not request results from Google Speech Recognition service; {0}".format(e))
-    
-class speechModule (threading.Thread) :
-    def __init__(self, name, data):
-        threading.Thread.__init__(self)
-        self.name = name
-        self.data = data
-        self.chatBot = chatBot(data)
-
-    def run(self):
-        while (True):
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
-                audio = r.listen(source)
-            try:
-                text = r.recognize_google(audio)
-                if ("wake" in text) and ("up" in text) :
-                    self.data.texts = []
-                    self.data.mode = "chatbot"
-                    self.chatBot.run()
-                elif ("ready" in text) and ("wheelchair" in text):
-                    self.data.mode = "wheelchair"
-                    #wheelchairMode()
-                    print
-                elif ("help" in text) or ("call" in text):
-                    self.data.mode = "call"
-                    if ("help" in text):
-                        self.data.callee = "911"
-                    else:
-                        self.data.callee = "+1(412)320-0542"
-                    #wheelchairMode()
-                    print
-                elif text == "shut down":
-                    break
-            except sr.UnknownValueError:
-                print("Waiting")
-            except sr.RequestError as e:
-                print("Could not request results from Google Speech Recognition service; {0}".format(e))
-            
 ####################################
 # handlers
 ####################################
@@ -130,21 +23,11 @@ class eventHandler():
 ####################################
 # customize these functions
 ####################################
-def chatBotInit():
-    chatbot = ChatBot('Alvin' , trainer='chatterbot.trainers.ChatterBotCorpusTrainer')
-    # Train based on the english corpus
-    chatbot.train("chatterbot.corpus.english")
-    # Train based on english greetings corpus
-    chatbot.train("chatterbot.corpus.english.greetings")
-    # Train based on the english conversations corpus
-    chatbot.train("chatterbot.corpus.english.conversations")
-    return chatbot
-
 def init(data):
     # load data.xyz as appropriate
     data.texts = []
     data.mode = "standby"
-    data.chatBot = chatBotInit() # Blocking I/O
+    data.chatBot = speech.chatBotInit() # Blocking I/O
     pass
 
 def initImg(data):
@@ -374,7 +257,7 @@ def run(width=400, height=600):
     handler = eventHandler()
     data.handler = handler
     # launch the speech_recognition thread
-    sr = speechModule("Speech Module", data)
+    sr = speech.speechModule("Speech Module", data)
     sr.start()
     # and launch the app
     root.mainloop()  # blocks until window is closed
