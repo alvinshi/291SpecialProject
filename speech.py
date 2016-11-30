@@ -85,6 +85,7 @@ class speechModule (threading.Thread):
                 audio = r.listen(source)
             try:
                 text = r.recognize_google(audio)
+                print text
                 if ("wake" in text) and ("up" in text) :
                     self.data.texts = []
                     self.data.mode = "chatbot"
@@ -101,7 +102,7 @@ class speechModule (threading.Thread):
                     else:
                         self.data.callee = "+1(412)979-3573"
                         make_call.call(self.data.callee);
-                elif ("hang" in text):
+                elif ("goodbye" in text):
                     self.data.mode = "standby"
                 elif text == "shut down":
                     break
