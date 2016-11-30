@@ -15,7 +15,7 @@ from ctypes import *
 
 try:
     if sys.platform.startswith('win32'):
-        libEDK = cdll.LoadLibrary("community-sdk-master/community-sdk-master/bin/win64/edk.dll")
+        libEDK = cdll.LoadLibrary("bin/win64/edk.dll")
     else:
         raise Exception('System not supported.')
 except Exception as e:

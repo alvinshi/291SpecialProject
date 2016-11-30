@@ -3,6 +3,7 @@ import speech_recognition as sr
 from chatterbot import ChatBot
 import pyttsx
 import threading
+import eeg
 
 #Libraries
 import web
@@ -52,7 +53,8 @@ class chatBot():
                     break;
                 elif ("ready" in text) and ("wheelchair" in text):
                     self.data.mode = "wheelchair"
-                    #wheelchairMode()
+                    e = eeg.EEG(self.data)
+                    e.start()
                     print
                 elif ("temperature" in text) and (("now" in text) or ("outside" in text)):
                     webScrapping = web.webScrappingModule()
@@ -92,7 +94,8 @@ class speechModule (threading.Thread):
                     self.chatBot.run()
                 elif ("ready" in text) and ("wheelchair" in text):
                     self.data.mode = "wheelchair"
-                    #wheelchairMode()
+                    e = eeg.EEG(self.data)
+                    e.start()
                     print
                 elif ("help" in text) or ("call" in text):
                     self.data.mode = "call"

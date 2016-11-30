@@ -6,6 +6,7 @@ from time import gmtime, strftime
 from datetime import datetime
 from pytz import timezone
 import math
+import eeg
 
 # Libaries
 import speech
@@ -28,6 +29,9 @@ def init(data):
     data.texts = []
     data.mode = "standby"
     data.chatBot = speech.chatBotInit() # Blocking I/O
+    class Struct(object): pass
+    data.EEG = Struct()
+    
     pass
 
 def initImg(data):

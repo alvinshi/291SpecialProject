@@ -3,9 +3,10 @@ import os
 import platform
 import time
 import ctypes
+import create
+import threading
 
 # Imports the library
-
 if sys.platform.startswith('win32'):
     import msvcrt
 else:
@@ -27,9 +28,6 @@ write = sys.stdout.write
 IEE_EmoEngineEventCreate = libEDK.IEE_EmoEngineEventCreate
 IEE_EmoEngineEventCreate.argtypes = []
 IEE_EmoEngineEventCreate.restype = c_void_p
-
-# Store 
-eEvent = IEE_EmoEngineEventCreate()
 
 IEE_EmoStateCreate = libEDK.IEE_EmoStateCreate
 IEE_EmoStateCreate.restype = c_void_p
@@ -87,3 +85,72 @@ IS_MentalCommandGetCurrentActionPower = \
     libEDK.IS_MentalCommandGetCurrentActionPower
 IS_MentalCommandGetCurrentActionPower.restype = c_float
 IS_MentalCommandGetCurrentActionPower.argtypes = [c_void_p]
+
+
+
+class EEG(threading.Thread):
+
+    CONTROLPANEL = c_uint(3008)
+    FORWARD = 2
+    BACKWARD = 4
+    TURN_AMOUNT = 30
+    SPEED_INC = 2
+    
+    def __init__(self, data):
+        print "init"
+        threading.Thread.__init__(self)
+        self.data = data
+        self.data.EEG.speed = 0
+        self.data.EEG.curCommand = "neutral"
+        # initiates robot
+        self.robot = create.Create("COM3")
+        # Connects to the control panel
+        libEDK.IEE_EngineRemoteConnect("127.0.0.1", EEG.CONTROLPANEL)
+        self.eEvent = IEE_EmoEngineEventCreate()
+        self.eState = IEE_EmoStateCreate()
+        
+    def run(self):
+        while (1):
+            if (self.data.mode != "wheelchair"):
+                break
+
+            state = libEDK.IEE_EngineGetNextEvent(self.eEvent)
+            if state == 0:
+                eventType = libEDK.IEE_EmoEngineEventGetType(self.eEvent)
+                if eventType == 64:
+                    libEDK.IEE_EmoEngineEventGetEmoState(self.eEvent, self.eState)
+                    
+                    mentalState = IS_MentalCommandGetCurrentAction(self.eState)
+                    if IS_FacialExpressionIsLeftWink(self.eState) != 0:
+                        self.data.EEG.curCommand = "left"
+                        self.robot.turn(EEG.TURN_AMOUNT)
+                    elif IS_FacialExpressionIsRightWink(self.eState) != 0:
+                        self.data.EEG.curCommand = "right"
+                        self.robot.turn(-EEG.TURN_AMOUNT)
+                    elif mentalState == EEG.FORWARD:
+                        self.data.EEG.curCommand = "forward"
+                        self.data.EEG.speed += EEG.SPEED_INC
+                        self.robot.go(self.data.EEG.speed)
+                    elif mentalState == EEG.BACKWARD:
+                        self.data.EEG.curCommand = "backward"
+                        self.data.EEG.speed -= EEG.SPEED_INC
+                        self.robot.go(self.data.EEG.speed)
+                    else:
+                        self.data.EEG.curCommand = "neutral"
+                        
+                    
+            elif state != 0x0600:
+                print "Internal error in Emotiv Engine ! "
+                break
+                
+            time.sleep(0.1)
+
+        # close connections
+        libEDK.IEE_EngineDisconnect()
+        libEDK.IEE_EmoStateFree(self.eState)
+        libEDK.IEE_EmoEngineEventFree(self.eEvent)
+        quit()
+
+
+
+
