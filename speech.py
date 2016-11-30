@@ -99,7 +99,7 @@ class speechModule (threading.Thread):
                         self.data.callee = "911"
                         #make_call.call(self.data.callee);
                     else:
-                        self.data.callee = "+1(412)320-0542"
+                        self.data.callee = "+1(412)979-3573"
                         make_call.call(self.data.callee);
                 elif ("hang" in text):
                     self.data.mode = "standby"
