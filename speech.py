@@ -18,6 +18,7 @@ def chatBotInit():
     chatbot.train("chatterbot.corpus.english.conversations")
     return chatbot
 
+#The speak engine does not work 
 class speakEngine(threading.Thread):
     def __init__(self, response):
         threading.Thread.__init__(self)
@@ -31,10 +32,12 @@ class speakEngine(threading.Thread):
 class chatBot():
     def __init__(self, data):
         self.data = data
-        self.engine = pyttsx.init()
+        #self.engine = pyttsx.init()
         
     def run(self):
         print "chat bot mode start"
+        #self.engine.say("hi, what can i do for you")
+        #self.engine.runAndWait()
         while (True):
             r = sr.Recognizer()
             with sr.Microphone() as source:
@@ -68,7 +71,7 @@ class chatBot():
             except sr.RequestError as e:
                 print("Could not request results from Google Speech Recognition service; {0}".format(e))
     
-class speechModule (threading.Thread) :
+class speechModule (threading.Thread):
     def __init__(self, name, data):
         threading.Thread.__init__(self)
         self.name = name
@@ -94,10 +97,12 @@ class speechModule (threading.Thread) :
                     self.data.mode = "call"
                     if ("help" in text):
                         self.data.callee = "911"
-                        make_call.call(self.data.callee);
+                        #make_call.call(self.data.callee);
                     else:
                         self.data.callee = "+1(412)320-0542"
                         make_call.call(self.data.callee);
+                elif ("hang" in text):
+                    self.data.mode = "standby"
                 elif text == "shut down":
                     break
             except sr.UnknownValueError:
