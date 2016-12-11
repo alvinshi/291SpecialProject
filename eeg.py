@@ -136,7 +136,9 @@ class EEG(threading.Thread):
                         self.data.EEG.speed -= EEG.SPEED_INC
                         self.robot.go(self.data.EEG.speed)
                     else:
-                        self.data.EEG.curCommand = "neutral"
+                        self.data.EEG.curCommand = "stop"
+
+                    # Maybe try to make this part all if's instead of elif
                         
                     
             elif state != 0x0600:
