@@ -10,7 +10,7 @@ import web
 import make_call
 
 def chatBotInit():
-    chatbot = ChatBot('Alvin' , trainer='chatterbot.trainers.ChatterBotCorpusTrainer')
+    chatbot = ChatBot('Roy' , trainer='chatterbot.trainers.ChatterBotCorpusTrainer')
     # Train based on the english corpus
     chatbot.train("chatterbot.corpus.english")
     # Train based on english greetings corpus
