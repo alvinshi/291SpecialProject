@@ -6,7 +6,7 @@ from time import gmtime, strftime
 from datetime import datetime
 from pytz import timezone
 import math
-import eeg
+#import eeg
 
 # Libaries
 import speech
@@ -31,7 +31,12 @@ def init(data):
     data.chatBot = speech.chatBotInit() # Blocking I/O
     class Struct(object): pass
     data.EEG = Struct()
-    
+    data.EEG.curCommand = "neutral"
+    data.EEG.voiceCommand = ""
+    data.EEG.speed = 0
+    data.EEG.battery = "NONE"
+    data.EEG.contact = "NONE"
+    data.EEG.signal = "NONE"
     pass
 
 def initImg(data):
@@ -129,15 +134,16 @@ def redrawAllWheelchair(canvas, data):
                        font = ("Helevetica", "10"),
                        fill = "WHITE")
     canvas.create_text(data.width // 2, data.height * 0.03,
-                       text = "Signal Strength: Weak",
+                       text = "Signal Strength : " + str(data.EEG.signal),
                        font = ("Helevetica", "10"),
                        fill = "WHITE")
     canvas.create_text(data.width // 2 + 150, data.height * 0.03,
-                       text = "Internet : Good",
+                       text = "Battery : " + str(data.EEG.battery),
                        font = ("Helevetica", "10"),
                        fill = "WHITE")
 
     #Wheelchair Control
+    motion = data.EEG.curCommand
     canvas.create_rectangle(data.width // 2 - 30, data.height // 2 - 30,
                             data.width // 2 + 30, data.height // 2 + 30,
                             fill = "White",
@@ -146,7 +152,7 @@ def redrawAllWheelchair(canvas, data):
     canvas.create_polygon(data.width // 2 - 30, data.height // 2 - 50,
                           data.width // 2 + 30, data.height // 2 - 50,
                           data.width // 2, data.height // 2 - 50 - 30 * math.sqrt(2),
-                          fill = "White",
+                          fill = ("Yellow" if motion == "forward" else "White"),
                           width = 3,
                           outline = "Black")
 
@@ -154,7 +160,7 @@ def redrawAllWheelchair(canvas, data):
     canvas.create_polygon(data.width // 2 - 30, data.height // 2 + 45,
                           data.width // 2 + 30, data.height // 2 + 45,
                           data.width // 2, data.height // 2 + 45 + 30 * math.sqrt(2),
-                          fill = "White",
+                          fill = ("Yellow" if motion == "backward" else "White"),
                           width = 3,
                           outline = "Black")
     
@@ -162,7 +168,7 @@ def redrawAllWheelchair(canvas, data):
     canvas.create_polygon(data.width // 2 - 45, data.height // 2 - 30,
                           data.width // 2 - 45, data.height // 2 + 30,
                           data.width // 2 - 45 - 30 * math.sqrt(2), data.height // 2, 
-                          fill = "White",
+                          fill = ("Yellow" if motion == "left" else "White"),
                           width = 3,
                           outline = "Black")
 
@@ -170,9 +176,21 @@ def redrawAllWheelchair(canvas, data):
     canvas.create_polygon(data.width // 2 + 45, data.height // 2 - 30,
                           data.width // 2 + 45, data.height // 2 + 30,
                           data.width // 2 + 45 + 30 * math.sqrt(2), data.height // 2, 
-                          fill = "White",
+                          fill = ("Yellow" if motion == "right" else "White"),
                           width = 3,
                           outline = "Black")
+
+    #Speed
+    canvas.create_text(data.width // 2, data.height * 0.75,
+                       text = str(data.EEG.speed) + " cm/s",
+                       font = ("Helevetica", "25"),
+                       fill = "WHITE")
+    
+    #Warnings
+    canvas.create_text(data.width // 2, data.height * 0.80,
+                       text = "take care and enjoy the ride",
+                       font = ("Helevetica", "15"),
+                       fill = "WHITE")
 
 def redrawAllCall(canvas, data):
     #Background
