@@ -97,9 +97,9 @@ class speechModule (threading.Thread):
                 print text
                 if (self.data.mode == "wheelchair"):
                     if ("stop" in text):
-                        self.EEG.voiceCommand = "stop"
+                        self.data.EEG.voiceCommand = "stop"
                     elif (("exit"  in text) or ("turn off" in text)):
-                        self.EEG.voiceCommand = "exit"
+                        self.data.EEG.voiceCommand = "exit"
                         self.data.mode = "standby"
                 else:
                     if ("wake" in text) and ("up" in text) :
