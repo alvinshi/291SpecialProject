@@ -101,7 +101,7 @@ class EEG(threading.Thread):
     FORWARD = 2
     BACKWARD = 4
     TURN_AMOUNT = 30
-    SPEED_INC = 2
+    SPEED_INC = 20
 
     batteryLevel     = c_long(0)
     batteryLevelP    = pointer(batteryLevel)
@@ -123,6 +123,12 @@ class EEG(threading.Thread):
         libEDK.IEE_EngineRemoteConnect("127.0.0.1", EEG.CONTROLPANEL)
         self.eEvent = IEE_EmoEngineEventCreate()
         self.eState = IEE_EmoStateCreate()
+        self.batteryLevel     = c_long(0)
+        self.batteryLevelP    = pointer(self.batteryLevel)
+        self.maxBatteryLevel  = c_int(0)
+        self.maxBatteryLevelP = pointer(self.maxBatteryLevel)
+        self.wirelessStrength = c_int(0)
+        self.channels = [3,7,9,12,16]
         
     def run(self):
         while (1):
@@ -146,16 +152,16 @@ class EEG(threading.Thread):
                     else:
                         self.data.EEG.signal = "Very weak"
 
-                    libEDK.IS_GetBatteryChargeLevel(self.eState, batteryLevelP, maxBatteryLevelP)
-                    if (batteryLevel.value >= 1):
+                    libEDK.IS_GetBatteryChargeLevel(self.eState, self.batteryLevelP, self.maxBatteryLevelP)
+                    if (self.batteryLevel.value >= 1):
                         self.data.EEG.battery = "High"
                     else:
                         self.data.EEG.battery = "Low"
                         
                     contactSum = 0;
-                    for (i in channels):
+                    for i in self.channels:
                         contactSum += IS_GetContactQuality(self.eState, i)
-                    contactQuality = contactSum / len(channels)
+                    contactQuality = contactSum / len(self.channels)
                     if (contactQuality >= 3):
                         self.data.EEG.contact = "Good"
                     elif(contactQuality >= 2):
@@ -165,20 +171,20 @@ class EEG(threading.Thread):
                     
                     mentalState = IS_MentalCommandGetCurrentAction(self.eState)
                     
-                    if IS_FacialExpressionIsLeftWink(self.eState) != 0:
+                    if mentalState == EEG.FORWARD:
+                        self.data.EEG.curCommand = "forward"
+                        self.data.EEG.speed += EEG.SPEED_INC
+                        self.robot.move(self.data.EEG.speed)
+                    elif IS_FacialExpressionIsLeftWink(self.eState) != 0:
                         self.data.EEG.curCommand = "left"
                         self.robot.turn(EEG.TURN_AMOUNT)
                     elif IS_FacialExpressionIsRightWink(self.eState) != 0:
                         self.data.EEG.curCommand = "right"
                         self.robot.turn(-EEG.TURN_AMOUNT)
-                    elif mentalState == EEG.FORWARD:
-                        self.data.EEG.curCommand = "forward"
-                        self.data.EEG.speed += EEG.SPEED_INC
-                        self.robot.go(self.data.EEG.speed)
-                    elif mentalState == EEG.BACKWARD:
-                        self.data.EEG.curCommand = "backward"
-                        self.data.EEG.speed -= EEG.SPEED_INC
-                        self.robot.go(self.data.EEG.speed)
+##                    if mentalState == EEG.BACKWARD:
+##                        self.data.EEG.curCommand = "backward"
+##                        self.data.EEG.speed -= EEG.SPEED_INC
+##                        self.robot.move(self.data.EEG.speed)
                     else:
                         self.data.EEG.curCommand = "neutral"
 

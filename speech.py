@@ -3,7 +3,7 @@ import speech_recognition as sr
 from chatterbot import ChatBot
 import pyttsx
 import threading
-# import eeg
+import eeg
 
 #Libraries
 import web
