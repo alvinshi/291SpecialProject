@@ -86,6 +86,13 @@ IS_MentalCommandGetCurrentActionPower = \
 IS_MentalCommandGetCurrentActionPower.restype = c_float
 IS_MentalCommandGetCurrentActionPower.argtypes = [c_void_p]
 
+IS_GetWirelessSignalStatus = libEDK.IS_GetWirelessSignalStatus
+IS_GetWirelessSignalStatus.restype = c_int
+IS_GetWirelessSignalStatus.argtypes = [c_void_p]
+
+IS_GetContactQuality = libEDK.IS_GetContactQuality
+IS_GetContactQuality.restype = c_int
+IS_GetContactQuality.argtypes = [c_void_p, c_int]
 
 
 class EEG(threading.Thread):
@@ -95,6 +102,13 @@ class EEG(threading.Thread):
     BACKWARD = 4
     TURN_AMOUNT = 30
     SPEED_INC = 2
+
+    batteryLevel     = c_long(0)
+    batteryLevelP    = pointer(batteryLevel)
+    maxBatteryLevel  = c_int(0)
+    maxBatteryLevelP = pointer(maxBatteryLevel)
+    wirelessStrength = c_int(0)
+    channels = [3,7,9,12,16]
     
     def __init__(self, data):
         print "init"
@@ -102,6 +116,7 @@ class EEG(threading.Thread):
         self.data = data
         self.data.EEG.speed = 0
         self.data.EEG.curCommand = "neutral"
+        
         # initiates robot
         self.robot = create.Create("COM3")
         # Connects to the control panel
@@ -113,14 +128,43 @@ class EEG(threading.Thread):
         while (1):
             if (self.data.mode != "wheelchair"):
                 break
-
+            if (self.data.EEG.voiceCommand == "stop"):
+                self.robot.go(0)
+            if (self.data.EEG.voiceCommand == "exit"):
+                break
             state = libEDK.IEE_EngineGetNextEvent(self.eEvent)
             if state == 0:
                 eventType = libEDK.IEE_EmoEngineEventGetType(self.eEvent)
                 if eventType == 64:
                     libEDK.IEE_EmoEngineEventGetEmoState(self.eEvent, self.eState)
+
+                    signalStrength = libEDK.IS_GetWirelessSignalStatus(self.eState)
+                    if (signalStrength > 2):
+                        self.data.EEG.signal = "Strong"
+                    elif (signalStrength > 0):
+                        self.data.EEG.signal = "Medium"
+                    else:
+                        self.data.EEG.signal = "Very weak"
+
+                    libEDK.IS_GetBatteryChargeLevel(self.eState, batteryLevelP, maxBatteryLevelP)
+                    if (batteryLevel.value >= 1):
+                        self.data.EEG.battery = "High"
+                    else:
+                        self.data.EEG.battery = "Low"
+                        
+                    contactSum = 0;
+                    for (i in channels):
+                        contactSum += IS_GetContactQuality(self.eState, i)
+                    contactQuality = contactSum / len(channels)
+                    if (contactQuality >= 3):
+                        self.data.EEG.contact = "Good"
+                    elif(contactQuality >= 2):
+                        self.data.EEG.contact = "Medium"
+                    else:
+                        self.data.EEG.contact = "Bad"
                     
                     mentalState = IS_MentalCommandGetCurrentAction(self.eState)
+                    
                     if IS_FacialExpressionIsLeftWink(self.eState) != 0:
                         self.data.EEG.curCommand = "left"
                         self.robot.turn(EEG.TURN_AMOUNT)
@@ -136,7 +180,7 @@ class EEG(threading.Thread):
                         self.data.EEG.speed -= EEG.SPEED_INC
                         self.robot.go(self.data.EEG.speed)
                     else:
-                        self.data.EEG.curCommand = "stop"
+                        self.data.EEG.curCommand = "neutral"
 
                     # Maybe try to make this part all if's instead of elif
                         
