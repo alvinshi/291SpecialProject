@@ -3,7 +3,7 @@ import speech_recognition as sr
 from chatterbot import ChatBot
 import pyttsx
 import threading
-import eeg
+# import eeg
 
 #Libraries
 import web
@@ -45,29 +45,36 @@ class chatBot():
                 audio = r.listen(source)
             try:
                 text = r.recognize_google(audio)
-                self.data.handler.informationOutputHandler(self.data, text)
-                print("You said: " + text)
-                if text == "goodbye" :
-                    self.data.handler.informationOutputHandler(self.data, "See you next time!")
-                    self.data.mode = "standby"
-                    break;
-                elif ("ready" in text) and ("wheelchair" in text):
-                    self.data.mode = "wheelchair"
-                    e = eeg.EEG(self.data)
-                    e.start()
-                    print
-                elif ("temperature" in text) and (("now" in text) or ("outside" in text)):
-                    webScrapping = web.webScrappingModule()
-                    response = webScrapping.weather()
-                    self.data.handler.informationOutputHandler(self.data, response)
-                elif ("weather" in text) and ("tomorrow" in text):
-                    webScrapping = web.webScrappingModule()
-                    response = webScrapping.weatherForcast()
-                    self.data.handler.informationOutputHandler(self.data, response)
+                print text
+                if (self.data.mode == "wheelchair"):
+                    if ("stop" in text):
+                        self.EEG.voiceCommand = "stop"
+                    elif (("exit"  in text) or ("turn off" in text)):
+                        self.EEG.voiceCommand = "exit"
+                        self.data.mode = "chatbot"
                 else:
-                    response = self.data.chatBot.get_response(text)
-                    print response
-                    self.data.handler.informationOutputHandler(self.data, response)
+                    self.data.handler.informationOutputHandler(self.data, text)
+                    print("You said: " + text)
+                    if text == "goodbye" :
+                        self.data.handler.informationOutputHandler(self.data, "See you next time!")
+                        self.data.mode = "standby"
+                        break;
+                    elif ("ready" in text) and ("wheelchair" in text):
+                        self.data.mode = "wheelchair"
+                        e = eeg.EEG(self.data)
+                        e.start()
+                    elif ("temperature" in text) and (("now" in text) or ("outside" in text)):
+                        webScrapping = web.webScrappingModule()
+                        response = webScrapping.weather()
+                        self.data.handler.informationOutputHandler(self.data, response)
+                    elif ("weather" in text) and ("tomorrow" in text):
+                        webScrapping = web.webScrappingModule()
+                        response = webScrapping.weatherForcast()
+                        self.data.handler.informationOutputHandler(self.data, response)
+                    else:
+                        response = self.data.chatBot.get_response(text)
+                        print response
+                        self.data.handler.informationOutputHandler(self.data, response)
             except sr.UnknownValueError:
                 print "Unknown Value Error"
             except sr.RequestError as e:
@@ -88,27 +95,30 @@ class speechModule (threading.Thread):
             try:
                 text = r.recognize_google(audio)
                 print text
-                if ("wake" in text) and ("up" in text) :
-                    self.data.texts = []
-                    self.data.mode = "chatbot"
-                    self.chatBot.run()
-                elif ("ready" in text) and ("wheelchair" in text):
-                    self.data.mode = "wheelchair"
-                    e = eeg.EEG(self.data)
-                    e.start()
-                    print
-                elif ("help" in text) or ("call" in text):
-                    self.data.mode = "call"
-                    if ("help" in text):
-                        self.data.callee = "911"
-                        #make_call.call(self.data.callee);
-                    else:
-                        self.data.callee = "+1(412)979-3573"
-                        make_call.call(self.data.callee);
-                elif ("goodbye" in text):
-                    self.data.mode = "standby"
-                elif text == "shut down":
-                    break
+                if (self.data.mode == "wheelchair"):
+                    if ("stop" in text):
+                        self.EEG.voiceCommand = "stop"
+                    elif (("exit"  in text) or ("turn off" in text)):
+                        self.EEG.voiceCommand = "exit"
+                        self.data.mode = "standby"
+                else:
+                    if ("wake" in text) and ("up" in text) :
+                        self.data.texts = []
+                        self.data.mode = "chatbot"
+                        self.chatBot.run()
+                    elif ("ready" in text) and ("wheelchair" in text):
+                        self.data.mode = "wheelchair"
+                        e = eeg.EEG(self.data)
+                        e.start()
+                    elif ("help" in text) or ("call" in text):
+                        self.data.mode = "call"
+                        if ("help" in text):
+                            self.data.callee = "+1(412)979-3573"
+                            make_call.call(self.data.callee);
+                    elif ("goodbye" in text):
+                        self.data.mode = "standby"
+                    elif text == "shut down":
+                        break
             except sr.UnknownValueError:
                 print("Waiting")
             except sr.RequestError as e:
