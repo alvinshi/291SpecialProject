@@ -118,7 +118,7 @@ class EEG(threading.Thread):
         self.data.EEG.curCommand = "neutral"
         
         # initiates robot
-        self.robot = create.Create("COM3")
+        self.robot = create.Create("COM4")
         # Connects to the control panel
         libEDK.IEE_EngineRemoteConnect("127.0.0.1", EEG.CONTROLPANEL)
         self.eEvent = IEE_EmoEngineEventCreate()
@@ -134,8 +134,6 @@ class EEG(threading.Thread):
         while (1):
             if (self.data.mode != "wheelchair"):
                 break
-            if (self.data.EEG.voiceCommand == "stop"):
-                self.robot.go(0)
             if (self.data.EEG.voiceCommand == "exit"):
                 break
             state = libEDK.IEE_EngineGetNextEvent(self.eEvent)
@@ -168,25 +166,26 @@ class EEG(threading.Thread):
                         self.data.EEG.contact = "Medium"
                     else:
                         self.data.EEG.contact = "Bad"
-                    
-                    mentalState = IS_MentalCommandGetCurrentAction(self.eState)
-                    
-                    if mentalState == EEG.FORWARD:
-                        self.data.EEG.curCommand = "forward"
-                        self.data.EEG.speed += EEG.SPEED_INC
-                        self.robot.move(self.data.EEG.speed)
-                    elif IS_FacialExpressionIsLeftWink(self.eState) != 0:
-                        self.data.EEG.curCommand = "left"
-                        self.robot.turn(EEG.TURN_AMOUNT)
-                    elif IS_FacialExpressionIsRightWink(self.eState) != 0:
-                        self.data.EEG.curCommand = "right"
-                        self.robot.turn(-EEG.TURN_AMOUNT)
-##                    if mentalState == EEG.BACKWARD:
-##                        self.data.EEG.curCommand = "backward"
-##                        self.data.EEG.speed -= EEG.SPEED_INC
-##                        self.robot.move(self.data.EEG.speed)
-                    else:
-                        self.data.EEG.curCommand = "neutral"
+
+                    if (self.data.EEG.voiceCommand != "stop"):
+                        mentalState = IS_MentalCommandGetCurrentAction(self.eState)
+                        
+##                        if mentalState == EEG.FORWARD:
+##                            self.data.EEG.curCommand = "forward"
+##                            self.data.EEG.speed += EEG.SPEED_INC
+##                            self.robot.move(self.data.EEG.speed)
+                        if IS_FacialExpressionIsLeftWink(self.eState) != 0:
+                            self.data.EEG.curCommand = "left"
+                            self.robot.turn(EEG.TURN_AMOUNT)
+                        elif IS_FacialExpressionIsRightWink(self.eState) != 0:
+                            self.data.EEG.curCommand = "right"
+                            self.robot.turn(-EEG.TURN_AMOUNT)
+##                        elif mentalState == EEG.FORWARD:
+##                            self.data.EEG.curCommand = "forward"
+##                            self.data.EEG.speed += EEG.SPEED_INC
+##                            self.robot.move(self.data.EEG.speed)
+                        else:
+                            self.data.EEG.curCommand = "neutral"
 
                     # Maybe try to make this part all if's instead of elif
                         

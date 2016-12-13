@@ -10,7 +10,7 @@ import web
 import make_call
 
 def chatBotInit():
-    chatbot = ChatBot('Roy' , trainer='chatterbot.trainers.ChatterBotCorpusTrainer')
+    chatbot = ChatBot('Alvin' , trainer='chatterbot.trainers.ChatterBotCorpusTrainer')
     # Train based on the english corpus
     chatbot.train("chatterbot.corpus.english")
     # Train based on english greetings corpus
@@ -48,9 +48,11 @@ class chatBot():
                 print text
                 if (self.data.mode == "wheelchair"):
                     if ("stop" in text):
-                        self.EEG.voiceCommand = "stop"
+                        self.data.EEG.voiceCommand = "stop"
+                    elif ("restart" in text):
+                        self.data.EEG.voiceCommand = ""
                     elif (("exit"  in text) or ("turn off" in text)):
-                        self.EEG.voiceCommand = "exit"
+                        self.data.EEG.voiceCommand = "exit"
                         self.data.mode = "chatbot"
                 else:
                     self.data.handler.informationOutputHandler(self.data, text)
@@ -98,6 +100,8 @@ class speechModule (threading.Thread):
                 if (self.data.mode == "wheelchair"):
                     if ("stop" in text):
                         self.data.EEG.voiceCommand = "stop"
+                    elif ("restart" in text):
+                        self.data.EEG.voiceCommand = ""
                     elif (("exit"  in text) or ("turn off" in text)):
                         self.data.EEG.voiceCommand = "exit"
                         self.data.mode = "standby"
@@ -111,10 +115,10 @@ class speechModule (threading.Thread):
                         e = eeg.EEG(self.data)
                         e.start()
                     elif ("help" in text) or ("call" in text):
-                        self.data.mode = "call"
                         if ("help" in text):
                             self.data.callee = "+1(412)979-3573"
                             make_call.call(self.data.callee);
+                        self.data.mode = "call"
                     elif ("goodbye" in text):
                         self.data.mode = "standby"
                     elif text == "shut down":
